@@ -1,8 +1,10 @@
 from fastapi import APIRouter, UploadFile, File, Depends, HTTPException, BackgroundTasks
+from fastapi.responses import FileResponse
 from sqlalchemy.ext.asyncio import AsyncSession
 from pathlib import Path
 import uuid
 import asyncio
+import sys
 
 from app.db.database import get_db, async_session
 from app.db import crud
@@ -13,30 +15,51 @@ from app.config import settings
 
 router = APIRouter()
 
+# Store mapping of syllabus_id to file path
+syllabus_files: dict[int, Path] = {}
+
 
 def process_syllabus_sync(syllabus_id: int, file_path: Path):
     """Background task wrapper that creates its own event loop and db session."""
-    asyncio.run(_process_syllabus(syllabus_id, file_path))
+    print(f"[SYNC] Background task started for syllabus {syllabus_id}", flush=True)
+    try:
+        asyncio.run(_process_syllabus(syllabus_id, file_path))
+    except Exception as e:
+        print(f"[SYNC] Background task failed: {e}", flush=True)
+        import traceback
+        traceback.print_exc()
 
 
 async def _process_syllabus(syllabus_id: int, file_path: Path):
     """Background task to process uploaded syllabus."""
+    print(f"[BG] Starting processing for syllabus {syllabus_id}", flush=True)
     async with async_session() as db:
         try:
             # Parse document
             raw_text = parser.parse(file_path)
-            print(f"Parsed document, got {len(raw_text)} characters")
+            print(f"[BG] Parsed document, got {len(raw_text)} characters", flush=True)
 
             # Extract assignments using Ollama
-            print("Calling Ollama...")
+            print("[BG] Calling Ollama...", flush=True)
             extraction_result = await ollama_extractor.extract_assignments(raw_text)
-            print(f"Ollama returned {len(extraction_result.get('assignments', []))} assignments")
+            print(f"[BG] Ollama returned {len(extraction_result.get('assignments', []))} assignments", flush=True)
 
-            # Get course info
+            # Get course info (with type safety)
             course_info = extraction_result.get("course_info", {})
+            if not isinstance(course_info, dict):
+                print(f"[BG] Warning: course_info is not a dict, using empty dict", flush=True)
+                course_info = {}
 
             # Create assignments in database
-            for assignment_data in extraction_result.get("assignments", []):
+            assignments = extraction_result.get("assignments", [])
+            if not isinstance(assignments, list):
+                print(f"[BG] Warning: assignments is not a list, using empty list", flush=True)
+                assignments = []
+
+            for assignment_data in assignments:
+                if not isinstance(assignment_data, dict):
+                    print(f"[BG] Warning: skipping non-dict assignment_data", flush=True)
+                    continue
                 assignment_data["course_name"] = course_info.get("course_name")
                 await crud.create_assignment(db, syllabus_id, assignment_data)
 
@@ -47,10 +70,12 @@ async def _process_syllabus(syllabus_id: int, file_path: Path):
                 instructor=course_info.get("instructor"),
                 semester=course_info.get("semester")
             )
-            print(f"Processing complete for syllabus {syllabus_id}")
+            print(f"[BG] Processing complete for syllabus {syllabus_id}", flush=True)
 
         except Exception as e:
-            print(f"Error processing syllabus: {e}")
+            print(f"[BG] Error processing syllabus: {e}", flush=True)
+            import traceback
+            traceback.print_exc()
             await crud.update_syllabus_status(db, syllabus_id, f"failed: {str(e)}")
 
         finally:
@@ -97,6 +122,7 @@ async def upload_syllabus(
     db_syllabus = await crud.create_syllabus(db, syllabus_data)
 
     # Process in background
+    print(f"[UPLOAD] Adding background task for syllabus {db_syllabus.id}", flush=True)
     background_tasks.add_task(process_syllabus_sync, db_syllabus.id, file_path)
 
     return {

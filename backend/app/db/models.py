@@ -9,6 +9,7 @@ class SyllabusDB(Base):
 
     id = Column(Integer, primary_key=True, index=True)
     filename = Column(String(255), nullable=False)
+    file_path = Column(String(500))  # Path to stored file for reference
     course_name = Column(String(255))
     instructor = Column(String(255))
     semester = Column(String(100))

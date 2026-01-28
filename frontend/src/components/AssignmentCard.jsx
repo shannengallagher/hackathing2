@@ -62,6 +62,21 @@ export default function AssignmentCard({ assignment }) {
             placeholder="Assignment title"
           />
           <div className="flex gap-3">
+            <select
+              value={editData.assignment_type}
+              onChange={(e) => setEditData({ ...editData, assignment_type: e.target.value })}
+              className="px-3 py-2 border rounded-md bg-white"
+            >
+              <option value="homework">Homework</option>
+              <option value="quiz">Quiz</option>
+              <option value="exam">Exam</option>
+              <option value="project">Project</option>
+              <option value="paper">Paper</option>
+              <option value="reading">Reading</option>
+              <option value="presentation">Presentation</option>
+              <option value="lab">Lab</option>
+              <option value="other">Other</option>
+            </select>
             <input
               type="date"
               value={editData.due_date}
