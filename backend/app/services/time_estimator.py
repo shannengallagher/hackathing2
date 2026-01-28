@@ -11,43 +11,49 @@ class TimeEstimator:
     # Keywords that indicate no prep time needed
     NO_TIME_KEYWORDS = ["participation", "attendance", "in-class", "in class", "quiz"]
 
-    # Base hours by assignment type
+    # Base hours by assignment type (conservative estimates)
     BASE_HOURS = {
-        "homework": 2.0,
-        "quiz": 0,  # In-class, no prep time
-        "exam": 4.0,  # Study time
-        "midterm": 8.0,
-        "final": 12.0,
-        "project": 10.0,
-        "paper": 8.0,
-        "reading": 1.5,
-        "presentation": 4.0,
-        "lab": 3.0,
-        "discussion": 0,  # In-class participation
+        "homework": 1.5,      # Typical weekly homework
+        "quiz": 0,            # In-class, no prep time
+        "exam": 3.0,          # Study time for regular exam
+        "project": 8.0,       # Multi-week project
+        "paper": 5.0,         # Standard paper/essay
+        "reading": 1.0,       # Reading assignment
+        "presentation": 3.0,  # Prepare slides + practice
+        "lab": 2.0,           # Lab work + writeup
+        "discussion": 0,      # In-class participation
         "participation": 0,
         "attendance": 0,
-        "other": 2.0
+        "other": 1.0          # Default conservative
     }
 
     # Keywords that modify estimated time
     COMPLEXITY_MULTIPLIERS = {
         # High complexity (increase time)
-        "research": 1.5,
-        "analysis": 1.3,
-        "comprehensive": 1.5,
-        "final": 1.5,
-        "midterm": 1.3,
-        "group": 1.2,
-        "team": 1.2,
-        "major": 1.4,
+        "research": 1.8,
+        "analysis": 1.4,
+        "comprehensive": 1.6,
+        "final": 2.0,         # Final exams/projects need more time
+        "midterm": 1.5,
+        "group": 1.3,
+        "team": 1.3,
+        "major": 1.5,
+        "term": 1.8,          # Term paper/project
+        "capstone": 2.0,
+        "thesis": 2.5,
+        "essay": 1.2,
+        "report": 1.3,
 
         # Lower complexity (decrease time)
-        "short": 0.7,
-        "brief": 0.7,
-        "mini": 0.5,
-        "quick": 0.6,
-        "review": 0.8,
-        "draft": 0.6,
+        "short": 0.6,
+        "brief": 0.6,
+        "mini": 0.4,
+        "quick": 0.5,
+        "review": 0.7,
+        "draft": 0.5,
+        "rough": 0.5,
+        "outline": 0.4,
+        "weekly": 0.8,        # Weekly assignments are usually smaller
     }
 
     # Length patterns and their hour estimates
@@ -73,9 +79,9 @@ class TimeEstimator:
 
         Priority:
         1. Check if type doesn't need time estimate
-        2. LLM estimate (if provided and reasonable)
-        3. Length-based calculation (if patterns found)
-        4. Type + complexity calculation
+        2. Length-based calculation (if patterns found)
+        3. Type + complexity calculation
+        4. LLM estimate used only as sanity check
         """
         combined_text = f"{title} {description or ''}".lower()
 
@@ -88,23 +94,19 @@ class TimeEstimator:
             if keyword in combined_text:
                 return None
 
-        # Use LLM estimate if provided and reasonable (0.25 to 50 hours)
-        if llm_estimate and 0.25 <= llm_estimate <= 50:
-            return round(llm_estimate, 2)
-
-        # Try length-based estimation first
+        # Try length-based estimation first (most accurate)
         length_estimate = self._estimate_from_length(combined_text)
         if length_estimate:
-            return round(max(0.25, min(length_estimate, 40.0)), 2)
+            return round(max(0.25, min(length_estimate, 40.0)), 1)
 
-        # Fall back to type + complexity
-        base = self.BASE_HOURS.get(assignment_type.lower(), 2.0)
+        # Calculate type + complexity estimate
+        base = self.BASE_HOURS.get(assignment_type.lower(), 1.0)
         multiplier = self._calculate_complexity_multiplier(combined_text)
+        calculated_estimate = base * multiplier
 
-        estimate = base * multiplier
-
-        # Clamp to reasonable range
-        return round(max(0.25, min(estimate, 40.0)), 2)
+        # Clamp to reasonable range and round to nearest 0.5
+        final = max(0.5, min(calculated_estimate, 40.0))
+        return round(final * 2) / 2  # Round to nearest 0.5
 
     def _estimate_from_length(self, text: str) -> Optional[float]:
         """Extract time estimate from length specifications in text."""

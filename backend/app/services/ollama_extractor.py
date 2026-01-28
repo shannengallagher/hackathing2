@@ -19,7 +19,7 @@ class OllamaExtractor:
         prompt = self._build_prompt(syllabus_text)
 
         try:
-            async with httpx.AsyncClient(timeout=120.0) as client:
+            async with httpx.AsyncClient(timeout=180.0) as client:
                 response = await client.post(
                     f"{self.base_url}/api/generate",
                     json={
@@ -32,8 +32,16 @@ class OllamaExtractor:
                 response.raise_for_status()
                 result = response.json()
 
-            parsed = self._parse_response(result.get("response", ""))
-            return self._process_assignments(parsed)
+            raw_response = result.get("response", "")
+            print(f"Ollama raw response length: {len(raw_response)} chars")
+            print(f"Ollama response preview: {raw_response[:500]}...")
+
+            parsed = self._parse_response(raw_response)
+            print(f"Parsed {len(parsed.get('assignments', []))} assignments from response")
+
+            processed = self._process_assignments(parsed)
+            print(f"After processing: {len(processed.get('assignments', []))} assignments")
+            return processed
 
         except httpx.ConnectError:
             raise ConnectionError(
@@ -91,7 +99,7 @@ Respond ONLY with valid JSON:
 }}
 
 SYLLABUS TEXT:
-{syllabus_text[:12000]}
+{syllabus_text[:20000]}
 
 JSON RESPONSE:"""
 
@@ -148,6 +156,10 @@ JSON RESPONSE:"""
             if assignment_type not in ["homework", "quiz", "exam", "project", "paper",
                                        "reading", "presentation", "lab", "other"]:
                 assignment_type = "other"
+
+            # Force quiz type if title contains "quiz" (ensures no time estimate)
+            if "quiz" in title:
+                assignment_type = "quiz"
 
             # Use time estimator to refine or fill in time estimates
             estimated_hours = time_estimator.estimate(
