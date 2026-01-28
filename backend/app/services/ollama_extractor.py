@@ -105,8 +105,15 @@ JSON RESPONSE:"""
 
     def _parse_response(self, response_text: str) -> Dict[str, Any]:
         """Parse and validate the LLM response."""
+        default_response = {"assignments": [], "course_info": {}}
+
         try:
             data = json.loads(response_text)
+
+            # Ensure we got a dict, not a string or other type
+            if not isinstance(data, dict):
+                print(f"Warning: Ollama returned non-dict type: {type(data)}")
+                return default_response
 
             if "assignments" not in data:
                 data["assignments"] = []
@@ -119,7 +126,9 @@ JSON RESPONSE:"""
             json_match = re.search(r'```(?:json)?\s*(.*?)\s*```', response_text, re.DOTALL)
             if json_match:
                 try:
-                    return json.loads(json_match.group(1))
+                    parsed = json.loads(json_match.group(1))
+                    if isinstance(parsed, dict):
+                        return parsed
                 except json.JSONDecodeError:
                     pass
 
@@ -127,11 +136,14 @@ JSON RESPONSE:"""
             json_match = re.search(r'\{.*\}', response_text, re.DOTALL)
             if json_match:
                 try:
-                    return json.loads(json_match.group(0))
+                    parsed = json.loads(json_match.group(0))
+                    if isinstance(parsed, dict):
+                        return parsed
                 except json.JSONDecodeError:
                     pass
 
-            return {"assignments": [], "course_info": {}}
+            print(f"Warning: Could not parse Ollama response as JSON")
+            return default_response
 
     def _process_assignments(self, data: Dict[str, Any]) -> Dict[str, Any]:
         """Process and validate extracted assignments."""
