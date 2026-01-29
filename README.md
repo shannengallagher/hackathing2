@@ -27,6 +27,7 @@ In the actual project, we are hoping to be able to link google calendar/personal
 2. Auto-detecting assignment types from keywords in titles is seemingly reliable
 3. Background processing keeps UI responsive while Ollama processes 
 4. Edit functionality allows users to correct/update assignments after parsing (ideally, in our project, the intial parsing will be much more accurate)
+5. Successful multi-format exports
 
 ## Technical References
 Claude code
