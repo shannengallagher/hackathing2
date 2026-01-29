@@ -22,5 +22,11 @@ In the actual project, we are hoping to be able to link google calendar/personal
 4. Asking for due dates, descriptions, and time estimates produced unreliable or incorrectly formed JSON due to format variation 
 5. Sometimes the first upload does not take and you have to reupload. I was having trouble ironing out this issue. 
 
+## What went well
+1. Basic upload and parsing flow works end to end 
+2. Auto-detecting assignment types from keywords in titles is seemingly reliable
+3. Background processing keeps UI responsive while Ollama processes 
+4. Edit functionality allows users to correct/update assignments after parsing (ideally, in our project, the intial parsing will be much more accurate)
+
 ## Technical References
 Claude code
