@@ -20,6 +20,7 @@ In the actual project, we are hoping to be able to link google calendar/personal
 2. Due to syllabi format, some were recognized as having 0 assignments listed. This required changing AI model, character limits, etc. to find the right balance as to not overload the system and make sure that substantial information could still be parsed.
 3. The tool still requires a lot of manual user input, which makes it fairly ineffective for its purpose. 
 4. Asking for due dates, descriptions, and time estimates produced unreliable or incorrectly formed JSON due to format variation 
+5. Sometimes the first upload does not take and you have to reupload. I was having trouble ironing out this issue. 
 
 ## Technical References
 Claude code
