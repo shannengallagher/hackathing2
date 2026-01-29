@@ -29,5 +29,5 @@ In the actual project, we are hoping to be able to link google calendar/personal
 4. Edit functionality allows users to correct/update assignments after parsing (ideally, in our project, the intial parsing will be much more accurate)
 5. Successful multi-format exports
 
-## Technical References
-Claude code
+## Technical References/AI Citation
+I used Claude Code as a development aid throughout this project. It helped implement FastAPI backend routes and SQLAlchemy database models, integrating with Ollama's local LLM API, debugging, handling unpredictable LLM responses, architectural guidance and suggestions, as well as tdevelopmental troubleshooting. 
