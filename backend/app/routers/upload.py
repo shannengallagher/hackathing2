@@ -1,5 +1,4 @@
 from fastapi import APIRouter, UploadFile, File, Depends, HTTPException, BackgroundTasks
-from fastapi.responses import FileResponse
 from sqlalchemy.ext.asyncio import AsyncSession
 from pathlib import Path
 import uuid
@@ -14,9 +13,6 @@ from app.services.ollama_extractor import ollama_extractor
 from app.config import settings
 
 router = APIRouter()
-
-# Store mapping of syllabus_id to file path
-syllabus_files: dict[int, Path] = {}
 
 
 def process_syllabus_sync(syllabus_id: int, file_path: Path):

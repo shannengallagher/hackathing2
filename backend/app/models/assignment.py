@@ -66,7 +66,6 @@ class SyllabusBase(BaseModel):
 
 class SyllabusCreate(SyllabusBase):
     raw_text: Optional[str] = None
-    file_path: Optional[str] = None
 
 
 class Syllabus(SyllabusBase):
@@ -74,7 +73,6 @@ class Syllabus(SyllabusBase):
     upload_date: datetime
     processing_status: str = "pending"
     raw_text: Optional[str] = None
-    file_path: Optional[str] = None
     assignments: List[Assignment] = []
 
     class Config:

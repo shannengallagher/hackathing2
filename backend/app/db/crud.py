@@ -11,7 +11,6 @@ from app.models.assignment import SyllabusCreate, AssignmentCreate
 async def create_syllabus(db: AsyncSession, syllabus: SyllabusCreate) -> SyllabusDB:
     db_syllabus = SyllabusDB(
         filename=syllabus.filename,
-        file_path=syllabus.file_path,
         course_name=syllabus.course_name,
         instructor=syllabus.instructor,
         semester=syllabus.semester,
